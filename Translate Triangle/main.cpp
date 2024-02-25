@@ -122,7 +122,7 @@ int main()
     glUseProgram(shader_programme);
     glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
 
-    float speed = 1.0f;
+    float speed = 0.5f;
     float last_position = 0.0f;
 
     while(!glfwWindowShouldClose(window))
