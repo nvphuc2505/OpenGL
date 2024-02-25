@@ -42,7 +42,7 @@ int main()
     glEnable (GL_DEPTH_TEST); 
     glDepthFunc (GL_LESS); 
 
-
+    // VBO
     GLuint points_vbo = 0;
     glGenBuffers(1, &points_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
@@ -53,11 +53,11 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, colours_vbo);
     glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), &colours, GL_STATIC_DRAW);
 
-    //VAO
+    // VAO
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
@@ -67,8 +67,8 @@ int main()
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    //Vertex Shader
-    const char* vertex_shader =  
+    //Shader
+    const char* vertex_shader =
     "#version 400\n"
 
     "layout(location = 0) in vec3 vertex_position;"
@@ -78,12 +78,12 @@ int main()
 
     "out vec3 colour;"
 
-    "void main(){"
+    "void main(){"   
         "colour = vertex_colour;"
         "gl_Position = matrix * vec4(vertex_position, 1.0f);"
-    "}"; 
-
-    const char* fragment_shader = 
+    "}";
+    
+    const char* fragment_shader =
     "#version 400\n"
 
     "in vec3 colour;"
@@ -96,7 +96,7 @@ int main()
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vertex_shader, NULL);
     glCompileShader(vs);
-
+    
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fs, 1, &fragment_shader, NULL);
     glCompileShader(fs);
@@ -104,26 +104,27 @@ int main()
     GLuint shader_programme = glCreateProgram();
     glAttachShader(shader_programme, vs);
     glAttachShader(shader_programme, fs);
-    
+
     glBindAttribLocation(shader_programme, 0, "vertex_position");
     glBindAttribLocation(shader_programme, 1, "vertex_colour");
 
     glLinkProgram(shader_programme);
 
-    // Translate Matrix
     float matrix[] = {
-        1.0f, 0.0f, 0.0f, 0.0f, // first column
-        0.0f, 1.0f, 0.0f, 0.0f, // second column
-        0.0f, 0.0f, 1.0f, 0.0f, // third column
-        0.5f, 0.0f, 0.0f, 1.0f // fourth column
+        1.0f, 0.0f,        0.0f,       0.0f,
+        0.0f, cos(45.0f),  sin(45.0f), 0.0f,
+        0.0f, -sin(45.0f), cos(45.0f), 0.0f,
+        0.0f, 0.0f,        0.0f,       1.0f
     };
-
-    int matrix_location = glGetUniformLocation(shader_programme, "matrix");
+    
+    int matrix_rotation = glGetUniformLocation(shader_programme, "matrix");
     glUseProgram(shader_programme);
-    glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
+    glUniformMatrix4fv(matrix_rotation, 1, GL_FALSE, matrix);
 
-    float speed = 1.0f;
-    float last_position = 0.0f;
+    //time since last movement * speed + last position
+
+    float speed = 1.5f;
+    float last_rotation = 0.0f;
 
     while(!glfwWindowShouldClose(window))
     {
@@ -132,29 +133,25 @@ int main()
         double elapsed_seconds = current_seconds - previous_seconds;
         previous_seconds = current_seconds;
 
-        // std::cout << "previous_seconds: " << previous_seconds << "\n";
-        // std::cout << "current_seconds: " << current_seconds << "\n";
-        // std::cout << "elapsed_seconds: " << elapsed_seconds << "\n";
+        matrix[5] = cos(speed * elapsed_seconds + last_rotation);
+        matrix[6] = sin(speed * elapsed_seconds + last_rotation);
+        matrix[9] = -sin(speed * elapsed_seconds + last_rotation);
+        matrix[10] = cos(speed * elapsed_seconds + last_rotation);
 
-        if(fabs(last_position) > 1.0f)
-        {
-            speed = -speed;
-        }
+        last_rotation = speed * elapsed_seconds + last_rotation;
 
-        matrix[12] = elapsed_seconds * speed + last_position;
-        last_position = matrix[12];
         glUseProgram(shader_programme);
-        glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
+        glUniformMatrix4fv(matrix_rotation, 1, GL_FALSE, matrix);
+
 
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         glUseProgram(shader_programme);
         glBindVertexArray(vao);
-
+        
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
-
 
     glfwTerminate();
     return 0;
