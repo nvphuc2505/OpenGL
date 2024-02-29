@@ -114,7 +114,7 @@ int main()
         pow(cos(45), 2),                                cos(45)*sin(45),                            -sin(45),           0,
         pow(sin(45), 2)*cos(45) - cos(45)*sin(45),      pow(sin(45), 3) + pow(cos(45), 2),          sin(45)*cos(45),    0,
         pow(cos(45), 2)*sin(45) + pow(sin(45), 2),      cos(45)*pow(sin(45), 2) - sin(45)*cos(45),  pow(cos(45), 2),    0,
-        0.5f,                                              0,                                          0,               1
+        0.5f,                                           0,                                          0,                  1
     };
 
     int matrix_location = glGetUniformLocation(shader_programme, "matrix");
