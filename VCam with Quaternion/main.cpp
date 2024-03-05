@@ -15,11 +15,6 @@ controls:                                                                    |
 #include <math.h>
 
 #include "quaternion.h"
-#include "maths_funcs.h"
-
-#define  VERTEX_SHADER_FILE  "test_vs.glsl"
-#define FRAGMENT_SHADER_FILE "test_fs.glsl"
-#define NUM_SPHERES 4
 
 // a world position for each sphere in the scene
 // float v1[3] = {-2.0f, 0.0f, 0.0f};
@@ -106,7 +101,7 @@ int main()
     "out vec3 colour;"
     "void main() {"
         "colour = vertex_colour;"
-        "gl_Position = view * proj * vec4(vertex_position, 1.0f);"
+        "gl_Position = vec4(vertex_position, 1.0f) * view * proj;"
     "}";
 
     const char* fragment_shader = 
@@ -180,7 +175,7 @@ int main()
     _versor_to_matrix(quaternion, R);
 
     float view_mat[16];
-    _multiplication_matrix(view_mat, R, T); // V = T x R (ROW-MAJOR)
+    _multiplication_matrix(view_mat, T, R); // V = T x R (ROW-MAJOR)
     
     int view_mat_location = glGetUniformLocation(shader_programme, "view");
     glUseProgram(shader_programme);
@@ -376,7 +371,7 @@ int main()
 
             _inverse_matrix(T);
             _inverse_matrix(R);
-            _multiplication_matrix(view_mat, R, T);
+            _multiplication_matrix(view_mat, T, R);
 
             glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
         }
