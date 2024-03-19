@@ -14,12 +14,12 @@ int gl_height = 480;
 int main()
 {
     GLfloat points[] = {
-        -0.5f, -0.5f, 0.0f, 
-        0.5f, -0.5f, 0.0f, 
-        0.5f, 0.5f, 0.0f, 
-        0.5f, 0.5f, 0.0f, 
-        -0.5f, 0.5f, 0.0f, 
-        -0.5f, -0.5f, 0.0f
+        -1.0f, -1.0f, 0.0f, 
+        1.0f, -1.0f, 0.0f, 
+        1.0f, 1.0f, 0.0f, 
+        1.0f, 1.0f, 0.0f, 
+        -1.0f, 1.0f, 0.0f, 
+        -1.0f, -1.0f, 0.0f
     };
 
     GLfloat textures[] = {
@@ -78,7 +78,7 @@ int main()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     const char* vertex_shader = 
-    "#version 400\n"
+    "#version 460\n"
     "layout(location = 0) in vec3 vertex_position;"
     "layout(location = 1) in vec2 aTex;"
 
@@ -90,7 +90,7 @@ int main()
     "}";
 
     const char* fragment_shader = 
-    "#version 400\n"
+    "#version 460\n"
     "out vec4 frag_colour;"
 
     "in vec2 texCoord;"
@@ -116,8 +116,28 @@ int main()
 
                             // TEXTURES //
     int width_Imag, height_Imag, numColCh;
-    unsigned char* bytes = stbi_load("skulluvmap.png", &width_Imag, &height_Imag, &numColCh, 4);
+    unsigned char* bytes = stbi_load("TxqGwF.png", &width_Imag, &height_Imag, &numColCh, 4);
 
+
+    // Algorithm to inverse
+    int width_in_bytes = width_Imag * 4;
+    unsigned char *top = NULL;
+    unsigned char *bottom = NULL;
+    unsigned char temp = 0;
+    int half_height = height_Imag / 2;
+    for (int row = 0; row < half_height; row++) 
+    {
+        top = bytes + row * width_in_bytes;
+        bottom = bytes + (height_Imag - row - 1) * width_in_bytes;
+        for (int col = 0; col < width_in_bytes; col++) 
+        {
+            temp = *top;
+            *top = *bottom;
+            *bottom = temp;
+            top++;
+            bottom++;
+        }
+    }
 
 
     GLuint texture;
@@ -128,8 +148,8 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width_Imag, height_Imag, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
     glGenerateMipmap(GL_TEXTURE_2D);
