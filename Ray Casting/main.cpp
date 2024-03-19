@@ -1,20 +1,145 @@
-/*
-pitch = W, S keys                                                
-yaw = A, D keys                                                 
-roll = Z, C keys   
-
-move forward/back = w,s keys                                                
-move left/right = a,d keys
-*/
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <cmath>
 #include <stdio.h>
+#include <cmath>
 #include <math.h>
 
+#include "math_funcs.h"
 #include "math_func.h"
+
+int gl_width = 640;
+int gl_height = 480;
+
+GLfloat points[] = {
+    0.0f, 0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    -0.5f, -0.5f, 0.0f
+};
+
+GLfloat proj_mat[16];
+GLfloat view_mat[16];
+float cam_pos[3] = {0.0f, 0.0f, 2.0f}; // Origin
+
+float dot_product(vec3 a, vec3 b)
+{
+    float tmp = a.v[0] + b.v[0] * a.v[1] + b.v[1] * a.v[2] + b.v[2];
+    return tmp;
+}
+vec3 cross_product(vec3 a, vec3 b)
+{
+    vec3 c;
+    c.v[0] = a.v[1] * b.v[2] - a.v[2] * b.v[1];
+    c.v[1] = -(a.v[0] * b.v[2] - a.v[2] * b.v[0]);
+    c.v[2] = a.v[0] * b.v[1] - a.v[1] * b.v[0];
+
+    return c;
+}
+float magnitude_vector(vec3 other)
+{
+    float length = sqrt(pow(other.v[0], 2) + pow(other.v[1], 2) + pow(other.v[2], 2));
+    return length;
+}
+vec3 normalise_vector(vec3 &other)
+{
+    vec3 tmp;
+    for(int i = 0; i < 3; i++)
+    {
+        tmp.v[i] = other.v[i];
+    }
+    
+    float length = magnitude_vector(tmp);
+    if(length == 0) return vec3(0.0f, 0.0f, 0.0f);
+    for(int i = 0; i < 3; i++)
+    {
+        other.v[i] = other.v[i] / length;
+    }
+    return other;
+}
+vec3 get_ray_from_mouse(float x_mouse, float y_mouse)
+{
+    float x = (2.0f * (float) x_mouse / (float) gl_width) - 1.0f; 
+    float y = 1.0f - ((2.0f * (float) y_mouse) / (float) gl_height);
+    float z = 1.0f;
+    
+    // Normalise Device Coordinates
+    vec3 ray_NDS(x, y, z);
+    
+    // Homogeneous Clip Coordinates
+    vec4 ray_HCS(ray_NDS.v[0], ray_NDS.v[1], -1.0f, 1.0f);
+
+    // Eyes Coordinates
+    GLfloat tmp_proj_mat[16];
+    for(int i = 0; i < 16; i++)
+    {
+        tmp_proj_mat[i] = proj_mat[i];
+    }
+    inverse_matrix(tmp_proj_mat);
+    vec4 ray_EC = ray_HCS;
+    multiply_matrix_to_vector(tmp_proj_mat, ray_EC);
+    vec4 tmp(ray_EC.v[0], ray_EC.v[1], -1.0f, 1.0f);
+    ray_EC = tmp;
+
+    // World Coordinates
+    GLfloat tmp_view_mat[16];
+    for(int i = 0; i < 16; i++) 
+    {
+        tmp_view_mat[i] = view_mat[i];
+    }
+    inverse_matrix(tmp_view_mat);
+    multiply_matrix_to_vector(tmp_view_mat, ray_EC);
+    vec3 ray_WS(ray_EC.v[0], ray_EC.v[1], ray_EC.v[2]);
+    
+    return normalise_vector(ray_WS);
+}
+bool ray_plane(GLfloat point[9], vec3 Rd, float Ro_tmp[3], float t)
+{
+    // Tìm toạ độ của P nằm trên Triangle, mà ray từ con trỏ chuột đi qua vớI khoảng cách là t
+}
+void glfw_mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if(GLFW_PRESS == action)
+    {
+        double x_mouse;
+        double y_mouse;
+        glfwGetCursorPos(window, &x_mouse, &y_mouse); //Current coordinates of the mouse pointer
+
+        vec3 ray_WS = get_ray_from_mouse(x_mouse, y_mouse); // Direction of the mouse pointer
+        //std::cout << "Current coordinates of the mouse pointer: ( " << ray_WS.v[0] << ", " << ray_WS.v[1] << ", " << ray_WS.v[2] << ")\n";
+
+        vec3 ri;
+        if(ray_plane(points, ray_WS, cam_pos, ri) == true)
+        {
+            std::cout << "Intersection at: ";
+            for(int i = 0; i < 3; i++)
+            {
+                std::cout << ri.v[i] << " ";
+            }
+            std::cout << '\n';
+        }
+        else std::cout << "No intersection occurs!\n";
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void normalise_quaternion(float (&q)[4]);
 void create_quaternion(float (&q)[4], float degrees, float x, float y, float z);
@@ -23,12 +148,6 @@ void quat_to_mat4(float (&matrix)[16], float q[4]);
 
 int main()
 {
-    GLfloat points[] = {
-        0.0f, 0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f
-    };
-
     GLfloat colours[] =
     {
         1.0f, 0.0f, 0.0f,
@@ -41,7 +160,7 @@ int main()
         return 1;
     }
     
-    GLFWwindow* window = glfwCreateWindow (640, 480, "Triangle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow (gl_width, gl_height, "Triangle", NULL, NULL);
     if (!window) {
         fprintf (stderr, "ERROR: could not open window with GLFW3\n");
         glfwTerminate();
@@ -59,17 +178,19 @@ int main()
    
     glEnable (GL_DEPTH_TEST); 
     glDepthFunc (GL_LESS);
+
+    glfwSetMouseButtonCallback(window, glfw_mouse_click_callback);
     /*========================================================*/
 
     GLuint points_vbo;
     glGenBuffers(1, &points_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GL_FLOAT), &points, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 9.0f * sizeof(GL_FLOAT), &points, GL_STATIC_DRAW);
 
     GLuint colours_vbo;
     glGenBuffers(1, &colours_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, colours_vbo);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GL_FLOAT), &colours, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 9.0f * sizeof(GL_FLOAT), &colours, GL_STATIC_DRAW);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -97,7 +218,7 @@ int main()
     "void main()"
     "{"
         "colour = vertex_colour;"
-        "gl_Position = proj * view * vec4(vertex_position, 1.0f);"
+        "gl_Position = proj * view * vec4(vertex_position, 1.0);"
     "}";
 
     const char* fragment_shader = 
@@ -132,22 +253,25 @@ int main()
     float fov          = (67.0f * M_PI) / 180.0f;
     float range        = tanf(fov * 0.5f) * near;
 
-    float Sx = (2 * near) / (range * aspect_ratio + range * aspect_ratio);
+    float Sx = (2.0f * near) / (range * aspect_ratio + range * aspect_ratio);
     float Sy = near / range;
     float Sz = -(far + near) / (far - near);
-    float Pz = -(2 * far * near) / (far - near);
+    float Pz = -(2.0f * far * near) / (far - near);
 
-    float proj_mat[16] = {
+    float tmp_proj_mat_tmp[16] = {
         Sx, 0.0f, 0.0f, 0.0f,
         0.0f, Sy, 0.0f, 0.0f,
         0.0f, 0.0f, Sz, Pz,
         0.0f, 0.0f, -1.0f, 0.0f
     };
+    for(int i = 0; i < 16; i++)
+    {
+        proj_mat[i] = tmp_proj_mat_tmp[i];
+    }
     transpose_matrix(proj_mat);
 
     // Built View Matrix
     float cam_speed = 5.0f;
-    float cam_pos[3] = {0.0f, 0.0f, 2.0f};
     float T[16] = {
         1.0f, 0.0f, 0.0f, -cam_pos[0],
         0.0f, 1.0f, 0.0f, -cam_pos[1],
@@ -163,7 +287,7 @@ int main()
     create_quaternion(quaternion, -cam_heading, 0.0f, 1.0f, 0.0f);
     quat_to_mat4(R, quaternion);
 
-    float view_mat[16];
+    //float view_mat[16];
     matrix_multiplite_matrix(view_mat, R, T);
 
     // Load all Matrices to Shader
@@ -193,7 +317,7 @@ int main()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwPollEvents();
-
+        
         bool cam_moved = false;
         float cam_pitch = 0.0f;
         float cam_yaw = 0.0f;
@@ -323,7 +447,6 @@ int main()
         {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
-
         glfwSwapBuffers(window);
     }
 
@@ -343,7 +466,7 @@ void create_quaternion(float (&q)[4], float degrees, float x, float y, float z){
 }
 void normalise_quaternion(float (&q)[4])
 {
-    float sum = pow(q[0], 2) + pow(q[1], 2) + pow(q[2], 2) + pow(q[3], 2);
+    float sum = pow(q[0], 2.0f) + pow(q[1], 2.0f) + pow(q[2], 2.0f) + pow(q[3], 2.0f);
     if(sum != 1.0f)
     {
         float mag = sqrt(sum);
