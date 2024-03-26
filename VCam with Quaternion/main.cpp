@@ -47,7 +47,7 @@ int main()
         glfwTerminate();
         return 1;
     }
-    glfwMakeContextCurrent (window);
+    glfwMakeContextCurrent(window);
     
     glewExperimental = GL_TRUE;
     glewInit ();
