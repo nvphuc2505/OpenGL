@@ -5,27 +5,33 @@
 #include <cmath>
 #include <math.h>
 
+#include "vbo.h"
+#include "vao.h"
+
 #define STB_IMAGE_IMPLEMENTATION
    #include "stb_image.h"
 
+const int gl_width = 640;
+const int gl_height = 480;
 
-   GLfloat points[] = {
-      -0.5f, -0.5f, 0.0f, 
-      0.5f, -0.5f, 0.0f, 
-      0.5f, 0.5f, 0.0f, 
-      0.5f, 0.5f, 0.0f, 
-      -0.5f, 0.5f, 0.0f, 
-      -0.5f, -0.5f, 0.0f
-   };
 
-   GLfloat texcoords[] = {
-      0.0f, 0.0f, 
-      1.0f, 0.0f, 
-      1.0f, 1.0f, 
-      1.0f, 1.0f, 
-      0.0f, 1.0f, 
-      0.0f, 0.0f
-   };
+GLfloat points[] = {
+   -0.5f, -0.5f, 0.0f, 
+   0.5f, -0.5f, 0.0f, 
+   0.5f, 0.5f, 0.0f, 
+   0.5f, 0.5f, 0.0f, 
+   -0.5f, 0.5f, 0.0f, 
+   -0.5f, -0.5f, 0.0f
+};
+
+GLfloat texcoords[] = {
+   0.0f, 0.0f, 
+   1.0f, 0.0f, 
+   1.0f, 1.0f, 
+   1.0f, 1.0f, 
+   0.0f, 1.0f, 
+   0.0f, 0.0f
+};
 
 int main()
 {
@@ -34,7 +40,7 @@ int main()
    return 1;
    }
    
-   GLFWwindow* window = glfwCreateWindow (640, 480, "Texture", NULL, NULL);
+   GLFWwindow* window = glfwCreateWindow (gl_width, gl_height, "Texture", NULL, NULL);
    if (!window) {
    fprintf (stderr, "ERROR: could not open window with GLFW3\n");
    glfwTerminate();
@@ -54,30 +60,24 @@ int main()
    glDepthFunc (GL_LESS);
 
    //VBO
-   GLuint points_vbo = 0;
-   glGenBuffers(1, &points_vbo); 
-   glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GL_FLOAT), &points, GL_STATIC_DRAW);
-   
-   GLuint texcoords_vbo = 0;
-   glGenBuffers(1, &texcoords_vbo);
-   glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GL_FLOAT), &texcoords, GL_STATIC_DRAW);
+   VBO points_vbo(points, sizeof(points));
+   VBO texcoords_vbo(texcoords, sizeof(texcoords));
 
    // VAO
-   GLuint vao = 0;
-   glGenVertexArrays(1, &vao);
-   glBindVertexArray(vao);
+   VAO vao;
+   vao.bindVAO();
+   vao.linkAttrib(points_vbo, 0, 3, GL_FLOAT, 0, NULL);
+   vao.linkAttrib(texcoords_vbo, 1, 2, GL_FLOAT, 0,NULL);
+   // glBindBuffer(GL_ARRAY_BUFFER, points_vbo.getID());
+   // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-   glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+   // glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo.getID());
+   // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-   glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
-   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+   // glEnableVertexAttribArray(0);
+   // glEnableVertexAttribArray(1);
 
-   glEnableVertexAttribArray( 0 );
-   glEnableVertexAttribArray( 1 );
-
+   //===========================================================
    const char* vertex_shader =
    "#version 460\n"
 
@@ -147,7 +147,7 @@ int main()
    {
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glUseProgram(shader_programme);
-      glBindVertexArray(vao);
+      vao.bindVAO();
       
       glDrawArrays(GL_TRIANGLES, 0, 6);
       glBindTexture(GL_TEXTURE_2D, tex);
@@ -155,8 +155,8 @@ int main()
       glfwSwapBuffers(window);
    }
 
-   glDeleteBuffers(1, &points_vbo);
-   glDeleteBuffers(1, &texcoords_vbo);
+   points_vbo.deleteVBO();
+   texcoords_vbo.deleteVBO();
    glDeleteTextures(1, &tex);
    glfwDestroyWindow(window);
    glfwTerminate();
