@@ -23,7 +23,6 @@ GLfloat points[] = {
    -0.5f, 0.5f, 0.0f, 
    -0.5f, -0.5f, 0.0f
 };
-
 GLfloat texcoords[] = {
    0.0f, 0.0f, 
    1.0f, 0.0f, 
@@ -68,16 +67,9 @@ int main()
    vao.bindVAO();
    vao.linkAttrib(points_vbo, 0, 3, GL_FLOAT, 0, NULL);
    vao.linkAttrib(texcoords_vbo, 1, 2, GL_FLOAT, 0,NULL);
-   // glBindBuffer(GL_ARRAY_BUFFER, points_vbo.getID());
-   // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-   // glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo.getID());
-   // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
-   // glEnableVertexAttribArray(0);
-   // glEnableVertexAttribArray(1);
 
    //===========================================================
+
    const char* vertex_shader =
    "#version 460\n"
 
