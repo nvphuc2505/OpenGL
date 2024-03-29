@@ -39,43 +39,28 @@ GLfloat normals[] =
     0.0f, 0.0f, 1.0f
 };
 
-glm::vec3 get_ray_form_mouse(float mouse_x, float mouse_y)
-{
-    // NORMALISED DEVICE SPACE
-    float x = (2.0f * mouse_x) / g_gl_width - 1.0f;
-    float y = 1.0f - (2.0f * mouse_y) / g_gl_height;
-    float z = 1.0f;
-    glm::vec3 ray_NDC(x, y, z);
+// glm::vec3 get_ray_form_mouse(float mouse_x, float mouse_y)
+// {
+//     // NORMALISED DEVICE SPACE
+//     float x = (2.0f * mouse_x) / g_gl_width - 1.0f;
+//     float y = 1.0f - (2.0f * mouse_y) / g_gl_height;
+//     float z = 1.0f;
+//     glm::vec3 ray_NDC(x, y, z);
 
-    // HOMOGENEOUS CLIP SPACE
-    z = -1.0f;
-    float w = 1.0f;
-    glm::vec4 ray_HCL(ray_NDC.x, ray_NDC.y, z, w);
+//     // HOMOGENEOUS CLIP SPACE
+//     z = -1.0f;
+//     float w = 1.0f;
+//     glm::vec4 ray_HCL(ray_NDC.x, ray_NDC.y, z, w);
 
-    // EYE SPACE
-    glm::vec4 ray_ES = glm::inverse(proj_mat) * ray_HCL;
-    ray_ES = glm::vec4(ray_ES.x, ray_ES.y, -1.0f, 0.0f);
+//     // EYE SPACE
+//     glm::vec4 ray_ES = glm::inverse(proj_mat) * ray_HCL;
+//     ray_ES = glm::vec4(ray_ES.x, ray_ES.y, -1.0f, 0.0f);
 
-    // WORLD SPACE
-    glm::vec3 tmp = glm::inverse(view_mat) * ray_ES;
-    glm::vec3 ray_WS(tmp.x, tmp.y, tmp.z);
-    return glm::normalize(ray_WS);
-}
-void glfw_mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
-{
-    if(GLFW_PRESS == action)
-    {
-        // Take the Position of Cursor
-        double xPos;
-        double yPos;
-        glfwGetCursorPos(window, &xPos, &yPos);
-
-        glm::vec3 ray_WS = get_ray_form_mouse(xPos, yPos);
-        std::cout << ray_WS.x << " " << ray_WS.y << " " << ray_WS.z << '\n';
-
-        
-    }
-}
+//     // WORLD SPACE
+//     glm::vec3 tmp = glm::inverse(view_mat) * ray_ES;
+//     glm::vec3 ray_WS(tmp.x, tmp.y, tmp.z);
+//     return glm::normalize(ray_WS);
+// }
 
 glm::quat create_Quaternion(float degree, float x, float y, float z) {
     float rad = glm::radians(degree);
