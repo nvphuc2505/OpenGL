@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <cmath>
+#include <fstream>
+#include <cstring>
 
 #include "vbo.h"
 #include "vao.h"
@@ -39,28 +41,31 @@ GLfloat normals[] =
     0.0f, 0.0f, 1.0f
 };
 
-// glm::vec3 get_ray_form_mouse(float mouse_x, float mouse_y)
-// {
-//     // NORMALISED DEVICE SPACE
-//     float x = (2.0f * mouse_x) / g_gl_width - 1.0f;
-//     float y = 1.0f - (2.0f * mouse_y) / g_gl_height;
-//     float z = 1.0f;
-//     glm::vec3 ray_NDC(x, y, z);
+bool parse_file_into_str(const char* file_name, char* shader_str, int max_len)
+{
+    std::ifstream file(file_name);
+    if(!file.is_open()) 
+    {    
+        std::cerr << "ERROR: opening file for reading: " << file_name << std::endl;
+        return false;
+    }
 
-//     // HOMOGENEOUS CLIP SPACE
-//     z = -1.0f;
-//     float w = 1.0f;
-//     glm::vec4 ray_HCL(ray_NDC.x, ray_NDC.y, z, w);
+    file.read(shader_str, max_len - 1);
 
-//     // EYE SPACE
-//     glm::vec4 ray_ES = glm::inverse(proj_mat) * ray_HCL;
-//     ray_ES = glm::vec4(ray_ES.x, ray_ES.y, -1.0f, 0.0f);
+    if (file.gcount() >= max_len - 1) std::cerr << "WARNING: file " << file_name << " too big - truncated." << std::endl;
+    
+    if (file.fail() && !file.eof()) 
+    {
+        std::cerr << "ERROR: reading shader file " << file_name << std::endl;
+        file.close();
+        return false;
+    }
 
-//     // WORLD SPACE
-//     glm::vec3 tmp = glm::inverse(view_mat) * ray_ES;
-//     glm::vec3 ray_WS(tmp.x, tmp.y, tmp.z);
-//     return glm::normalize(ray_WS);
-// }
+    shader_str[file.gcount()] = '\0';
+
+    file.close();
+    return true;
+}
 
 glm::quat create_Quaternion(float degree, float x, float y, float z) {
     float rad = glm::radians(degree);
@@ -102,79 +107,22 @@ int main()
 
     //=====================================================
 
-    // Vertex Shader & Fragment Shader
-    const char* vertex_shader = 
-    "#version 460\n"
-
-    "layout(location = 0) in vec3 vertex_position;"
-    "layout(location = 1) in vec3 vertex_normal;"
-
-    "out vec3 position_eye, normal_eye;"
-
-    "uniform mat4 model;"
-    "uniform mat4 proj;"
-    "uniform mat4 view;"
-
-    "void main(){"
-        "position_eye = vec3(view * model * vec4(vertex_position, 1.0f));"
-        "normal_eye   = vec3(view * model * vec4(vertex_normal, 0.0f));"
-        "gl_Position  = proj * vec4(position_eye, 1.0f);"
-    "}";
-
-    const char* fragment_shader = 
-    "#version 460\n"
-
-    "in vec3 normal_eye;"
-    "in vec3 position_eye;"
-
-    "uniform mat4 view_mat;"
-
-    "vec3 light_position_world = vec3(0.0f, 0.0f, 2.0f);"
-    "vec3 Ld = vec3(0.7f, 0.7f, 0.7f);"
-    "vec3 Ls = vec3(1.0f, 1.0f, 1.0f);"
-    "vec3 La = vec3(0.2f, 0.2f, 0.2f);"
-    
-    "vec3 Kd = vec3(1.0f, 0.5f, 0.0f);"
-    "vec3 Ks = vec3(1.0f, 1.0f, 1.0f);"
-    "vec3 Ka = vec3(1.0f, 1.0f, 1.0f);"
-    "float specular_exponent = 100.0f;"
-
-    "out vec4 frag_colour;"
-
-    "void main(){"
-        // Diffuse light intensity Id
-        "vec3 light_position_eye = vec3(view_mat * vec4(light_position_world, 1.0f));"
-        "vec3 distance_to_light_eye = light_position_eye - position_eye;"
-        "vec3 direction_to_light_eye = normalize(distance_to_light_eye);"
-        "float dot_prod = dot(direction_to_light_eye, normal_eye);"
-        "dot_prod = max(dot_prod, 0.0f);"
-        "vec3 Id = Ld * Kd * dot_prod;"
-
-        // Specular light intensity (Is)
-        "vec3 surface_to_viewer_eye = normalize(-position_eye);"
-
-        // "vec3 reflection_eye = reflect(-direction_to_light_eye, normal_eye);"
-        // "float dot_prod_specular = dot(reflection_eye, surface_to_viewer_eye);"
-        // "dot_prod_specular = max(dot_prod_specular, 0.0f);"
-        // "float specular_factor = pow(dot_prod_specular, specular_exponent);"
-
-        // Blinn Phong
-        "vec3 half_way_eye = normalize(surface_to_viewer_eye + direction_to_light_eye);"
-        "float dot_prod_specular = max(dot(half_way_eye, normal_eye), 0.0f);"
-        "float specular_factor = pow(dot_prod_specular, specular_exponent);"
-        "vec3 Is = Ls * Ks * specular_factor;"
-
-        "vec3 Ia = La * Ka;"
-        
-        "frag_colour = vec4(Id + Is + Ia, 1.0f);"
-    "}";
+    // Vertex Shader
+    char vertex_shader[1024 * 256];
+    parse_file_into_str("test_vs.glsl", vertex_shader, 1024 * 256);
+    const GLchar* v = (const GLchar*) vertex_shader;
 
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &vertex_shader, NULL);
+    glShaderSource(vs, 1, &v, NULL);
     glCompileShader(vs);
+    
+    // Fragment Shader
+    char fragment_shader[1024 * 256];
+    parse_file_into_str("test_fs.glsl", fragment_shader, 1024 * 256);
+    const GLchar* f = (const GLchar*)fragment_shader;
 
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fragment_shader, NULL);
+    glShaderSource(fs, 1, &f, NULL);
     glCompileShader(fs);
 
     // Shader Porgram
