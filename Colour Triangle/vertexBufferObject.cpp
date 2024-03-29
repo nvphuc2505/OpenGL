@@ -53,7 +53,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, colours_vbo);
     glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), &colours, GL_STATIC_DRAW);
 
-    // VERTEX ATTRIBUTE OBJECT
+    // VAO
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
