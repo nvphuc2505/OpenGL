@@ -5,7 +5,7 @@ class VAO
     public:
         VAO();
         void bindVAO();
-        void linkAttrib(VBO, GLuint, GLuint, GLenum, GLsizeiptr, void*);
+        void linkAttrib(VBO&, GLuint, GLuint, GLenum, GLsizeiptr, void*);
 };
 
 VAO::VAO()
@@ -17,7 +17,7 @@ void VAO::bindVAO()
 {
     glBindVertexArray(m_ID);
 }
-void VAO::linkAttrib(VBO vbo, GLuint layout, GLuint numberOfComponents, GLenum type, GLsizeiptr stride, void* offset)
+void VAO::linkAttrib(VBO& vbo, GLuint layout, GLuint numberOfComponents, GLenum type, GLsizeiptr stride, void* offset)
 {
     vbo.bindVBO();
     glVertexAttribPointer(layout, numberOfComponents, type, GL_FALSE, stride, offset);

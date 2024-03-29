@@ -66,7 +66,7 @@ int main()
    VAO vao;
    vao.bindVAO();
    vao.linkAttrib(points_vbo, 0, 3, GL_FLOAT, 0, NULL);
-   vao.linkAttrib(texcoords_vbo, 1, 2, GL_FLOAT, 0,NULL);
+   vao.linkAttrib(texcoords_vbo, 1, 2, GL_FLOAT, 0, NULL);
 
    //===========================================================
 
